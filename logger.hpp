@@ -4,8 +4,9 @@
 #include <atomic>
 
 #include "lf_queue.hpp"
-#include "thread_utils.hpp"
 #include "macros.hpp"
+#include "thread_utils.hpp"
+#include "time_utils.hpp"
 
 namespace Common {
     constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
@@ -41,52 +42,52 @@ namespace Common {
     private:
         const std::string file_name_;
         std::ofstream file_;
-        LFQueue<LogElement> log_queue;
+        LFQueue<LogElement> log_queue_;
         std::thread* logger_thread_ = nullptr;
         std::atomic<bool> running_ = {true};
 
     public:
-        explicit Logger(const std::string& file_name) : file_name_(file_name), log_queue(LOG_QUEUE_SIZE) {
+        explicit Logger(const std::string& file_name) : file_name_(file_name), log_queue_(LOG_QUEUE_SIZE) {
             file_.open(file_name);
             ASSERT(file_.is_open(), "Failed to open log file: " + file_name);
-            logger_thread_ = createAndStartThread(-1, "Logger Thread", [this](){ flushQueue(); });
+            logger_thread_ = createAndStartThread(-1, "Logger for " + file_name, [this](){ flushQueue(); });
             ASSERT(logger_thread_ != nullptr, "Could not start Logger thread");
         }
 
         void flushQueue() noexcept {
             while(running_) {
-                for (auto next = queue_.getNextToRead(); queue_.size() && next; next = queue_.getNextToRead()) {
+                for (auto next = log_queue_.getNextToRead(); log_queue_.size() && next; next = log_queue_.getNextToRead()) {
                     switch (next->type_) {
                         case LogType::CHAR:
-                            file_ << next->u_.c;
+                            file_ << next->data_.c;
                         break;
                         case LogType::INTEGER:
-                            file_ << next->u_.i;
+                            file_ << next->data_.i;
                         break;
                         case LogType::LONG_INTEGER:
-                            file_ << next->u_.l;
+                            file_ << next->data_.l;
                         break;
                         case LogType::LONG_LONG_INTEGER:
-                            file_ << next->u_.ll;
+                            file_ << next->data_.ll;
                         break;
                         case LogType::UNSIGNED_INTEGER:
-                            file_ << next->u_.u;
+                            file_ << next->data_.u;
                         break;
                         case LogType::UNSIGNED_LONG_INTEGER:
-                            file_ << next->u_.ul;
+                            file_ << next->data_.ul;
                         break;
                         case LogType::UNSIGNED_LONG_LONG_INTEGER:
-                            file_ << next->u_.ull;
+                            file_ << next->data_.ull;
                         break;
                         case LogType::FLOAT:
-                            file_ << next->u_.f;
+                            file_ << next->data_.f;
                         break;
                         case LogType::DOUBLE:
-                            file_ << next->u_.d;
+                            file_ << next->data_.d;
                         break;
                     }
 
-                    queue_.updateReadIndex();
+                    log_queue_.updateReadIndex();
                 }
 
                 file_.flush();
@@ -101,7 +102,7 @@ namespace Common {
             std::cerr << Common::getCurrentTimeStr(&time_str) << " Flushing and closing Logger for " << file_name_ << std::endl;
 
             using namespace std::literals::chrono_literals;
-            while (queue_.size()) {
+            while (log_queue_.size()) {
                 std::this_thread::sleep_for(1s);
             }
             running_ = false;
@@ -112,8 +113,8 @@ namespace Common {
         }
 
         auto pushValue(const LogElement &log_element) noexcept {
-            *(queue_.getNextToWriteTo()) = log_element;
-            queue_.updateWriteIndex();
+            *(log_queue_.getNextToWrite()) = log_element;
+            log_queue_.updateWriteIndex();
         }
 
         auto pushValue(const char value) noexcept {
