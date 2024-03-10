@@ -22,8 +22,8 @@ list(APPEND LIBS pthread)
 add_executable(mempool_example mempool_example.cpp)
 target_link_libraries(mempool_example PUBLIC ${LIBS})
 
-# add_executable(lf_queue_example lf_queue_example.cpp)
-# target_link_libraries(lf_queue_example PUBLIC ${LIBS})
+add_executable(lf_queue_example lf_queue_example.cpp)
+target_link_libraries(lf_queue_example PUBLIC ${LIBS})
 
 # add_executable(logging_example logging_example.cpp)
 # target_link_libraries(logging_example PUBLIC ${LIBS})
