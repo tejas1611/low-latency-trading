@@ -68,7 +68,7 @@ namespace Exchange {
 
         void addOrdersAtPrice(MEOrdersAtPrice* new_orders_at_price);
 
-        void removeOrdersAtPrice(MEOrdersAtPrice* new_orders_at_price);
+        void removeOrdersAtPrice(Side side, Price price);
 
         Priority getNextPriority(Price price) noexcept {
             const auto orders_at_price = getOrdersAtPrice(price);

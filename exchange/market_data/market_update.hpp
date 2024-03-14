@@ -45,8 +45,7 @@ namespace Exchange {
 
         auto toString() const {
             std::stringstream ss;
-            ss << "MEMarketUpdate"
-                << " ["
+            ss << "MEMarketUpdate["
                 << " type:" << marketUpdateTypeToString(type_)
                 << " ticker:" << tickerIdToString(ticker_id_)
                 << " oid:" << orderIdToString(order_id_)
