@@ -7,7 +7,7 @@
 #include "market_data/market_update.hpp"
 #include "order_server/client_response.hpp"
 
-#include "me_order.hpp"
+#include "matching_engine/me_order.hpp"
 
 using namespace Common;
 
@@ -40,8 +40,9 @@ namespace Exchange {
 
     public:
         explicit MEOrderBook(TickerId ticker_id, MatchingEngine* matchine_engine, Logger* logger);
+        ~MEOrderBook();
 
-        std::string toString() const;
+        std::string toString(bool detailed, bool validity_check) const;
 
         void add(ClientId client_id, OrderId client_order_id, Side side, Price price, Qty qty) noexcept;
         void cancel(ClientId client_id, OrderId client_order_id) noexcept;
@@ -69,7 +70,7 @@ namespace Exchange {
 
         void removeOrdersAtPrice(MEOrdersAtPrice* new_orders_at_price);
 
-        auto getNextPriority(Price price) noexcept {
+        Priority getNextPriority(Price price) noexcept {
             const auto orders_at_price = getOrdersAtPrice(price);
             if (!orders_at_price)
                 return 1lu;
@@ -77,9 +78,9 @@ namespace Exchange {
             return orders_at_price->first_me_order_->prev_order_->priority_ + 1;
         }
 
-        auto match(TickerId ticker_id, ClientId client_id, Side side, OrderId client_order_id, OrderId new_market_order_id, MEOrder* bid_itr, Qty* leaves_qty) noexcept;
+        void match(TickerId ticker_id, ClientId client_id, Side side, OrderId client_order_id, OrderId new_market_order_id, MEOrder* matched_order, Qty& leaves_qty) noexcept;
 
-        auto checkForMatch(ClientId client_id, OrderId client_order_id, TickerId ticker_id, Side side, Price price, Qty qty, Qty new_market_order_id) noexcept;
+        Qty checkForMatch(ClientId client_id, OrderId client_order_id, TickerId ticker_id, Side side, Price price, Qty qty, OrderId new_market_order_id) noexcept;
 
         void addOrder(MEOrder* order) noexcept;
 
