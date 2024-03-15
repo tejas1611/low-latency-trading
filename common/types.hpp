@@ -49,7 +49,7 @@ namespace Common {
         return std::to_string(client_id);
     }
 
-    enum class Side : uint8_t {
+    enum class Side : int8_t {
         INVALID = 0,
         BUY = 1,
         SELL = -1

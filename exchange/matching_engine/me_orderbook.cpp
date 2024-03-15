@@ -1,5 +1,7 @@
 #include "matching_engine/me_orderbook.hpp"
 
+#include "matching_engine/matching_engine.hpp"
+
 namespace Exchange {
 
 MEOrderBook::MEOrderBook(TickerId ticker_id, MatchingEngine* matchine_engine, Logger* logger) :
@@ -29,7 +31,7 @@ void MEOrderBook::add(ClientId client_id, OrderId client_order_id, Side side, Pr
     if (leaves_qty > 0) [[likely]] {
         const Priority priority = getNextPriority(price);
 
-        MEOrder* order = order_pool_.allocate(ticker_id_, client_order_id, new_market_order_id, client_id, side, price, leaves_qty, priority);
+        MEOrder* order = order_pool_.allocate(ticker_id_, client_order_id, new_market_order_id, client_id, side, price, leaves_qty, priority, nullptr, nullptr);
 
         addOrder(order);
 
@@ -63,7 +65,7 @@ void MEOrderBook::cancel(ClientId client_id, OrderId client_order_id) noexcept {
 }
 
 // Function referred from author's implementation at https://github.com/PacktPublishing/Building-Low-Latency-Applications-with-CPP/blob/fc7061f3435009a5e8d78b2dc189c50b59317d58/Chapter6/exchange/matcher/me_order_book.cpp#L126
-std::string MEOrderBook::toString(bool detailed, bool validity_check) {
+std::string MEOrderBook::toString(bool detailed, bool validity_check) const {
     std::stringstream ss;
     std::string time_str;
 
@@ -72,17 +74,17 @@ std::string MEOrderBook::toString(bool detailed, bool validity_check) {
         Qty qty = 0;
         size_t num_orders = 0;
 
-        for (auto o_itr = itr->first_me_order_;; o_itr = o_itr->next_order_) {
+        for (auto o_itr = itr->first_order_;; o_itr = o_itr->next_order_) {
         qty += o_itr->qty_;
         ++num_orders;
-        if (o_itr->next_order_ == itr->first_me_order_)
+        if (o_itr->next_order_ == itr->first_order_)
             break;
         }
         sprintf(buf, " <px:%3s p:%3s n:%3s> %-3s @ %-5s(%-4s)",
                 priceToString(itr->price_).c_str(), priceToString(itr->prev_entry_->price_).c_str(), priceToString(itr->next_entry_->price_).c_str(),
                 priceToString(itr->price_).c_str(), qtyToString(qty).c_str(), std::to_string(num_orders).c_str());
         ss << buf;
-        for (auto o_itr = itr->first_me_order_;; o_itr = o_itr->next_order_) {
+        for (auto o_itr = itr->first_order_;; o_itr = o_itr->next_order_) {
         if (detailed) {
             sprintf(buf, "[oid:%s q:%s p:%s n:%s] ",
                     orderIdToString(o_itr->market_order_id_).c_str(), qtyToString(o_itr->qty_).c_str(),
@@ -90,7 +92,7 @@ std::string MEOrderBook::toString(bool detailed, bool validity_check) {
                     orderIdToString(o_itr->next_order_ ? o_itr->next_order_->market_order_id_ : OrderId_INVALID).c_str());
             ss << buf;
         }
-        if (o_itr->next_order_ == itr->first_me_order_)
+        if (o_itr->next_order_ == itr->first_order_)
             break;
         }
 
@@ -240,7 +242,7 @@ Qty MEOrderBook::checkForMatch(ClientId client_id, OrderId client_order_id, Tick
     switch (side) {
         case Side::BUY:
             while (leaves_qty > 0 && asks_at_price_ != nullptr) {
-                const MEOrder* top_ask = asks_at_price_->first_order_;
+                MEOrder* top_ask = asks_at_price_->first_order_;
 
                 if (top_ask->price_ > price) break;
 
@@ -250,13 +252,16 @@ Qty MEOrderBook::checkForMatch(ClientId client_id, OrderId client_order_id, Tick
 
         case Side::SELL:
             while (leaves_qty > 0 && bids_at_price_ != nullptr) {
-                const MEOrder* top_bid = bids_at_price_->first_order_;
+                MEOrder* top_bid = bids_at_price_->first_order_;
 
                 if (top_bid->price_ < price) break;
 
                 match(ticker_id, client_id, side, client_order_id, new_market_order_id, top_bid, leaves_qty);
             }
         break;
+        
+        default:
+            FATAL("Received invalid client-request-side:" + sideToString(side));
     }
 
     return leaves_qty;
@@ -286,7 +291,7 @@ void MEOrderBook::removeOrder(MEOrder* order) noexcept {
     MEOrdersAtPrice* orders_at_price = getOrdersAtPrice(order->price_);
 
     if (order->next_order_ == order) {   // Only order at the price level
-        removeOrdersAtPrice(orders_at_price);
+        removeOrdersAtPrice(orders_at_price->side_, orders_at_price->price_);
     }
     else {
         order->prev_order_->next_order_ = order->next_order_;

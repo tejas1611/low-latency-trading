@@ -19,6 +19,7 @@ namespace Exchange {
         TickerId ticker_id_ = TickerId_INVALID;
 
         MatchingEngine* matching_engine_ = nullptr;
+        Logger* logger_ = nullptr;
 
         ClientOrderHashMap cid_oid_to_order_;
 
@@ -34,9 +35,7 @@ namespace Exchange {
         MEMarketUpdate market_update_;
         
         OrderId next_order_id_ = 1;
-
         std::string time_str_;
-        Logger* logger_ = nullptr;
 
     public:
         explicit MEOrderBook(TickerId ticker_id, MatchingEngine* matchine_engine, Logger* logger);
@@ -63,7 +62,7 @@ namespace Exchange {
         } 
 
         MEOrdersAtPrice* getOrdersAtPrice(Price price) const {
-            return price_orders_at_price[priceToIndex(price)];
+            return price_orders_at_price_[priceToIndex(price)];
         }
 
         void addOrdersAtPrice(MEOrdersAtPrice* new_orders_at_price);
@@ -75,7 +74,7 @@ namespace Exchange {
             if (!orders_at_price)
                 return 1lu;
 
-            return orders_at_price->first_me_order_->prev_order_->priority_ + 1;
+            return orders_at_price->first_order_->prev_order_->priority_ + 1;
         }
 
         void match(TickerId ticker_id, ClientId client_id, Side side, OrderId client_order_id, OrderId new_market_order_id, MEOrder* matched_order, Qty& leaves_qty) noexcept;
@@ -86,4 +85,6 @@ namespace Exchange {
 
         void removeOrder(MEOrder* order) noexcept;
     };
+
+    typedef std::array<MEOrderBook*, ME_MAX_TICKERS> OrderBookHashMap;
 }
