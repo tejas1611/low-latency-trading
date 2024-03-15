@@ -22,7 +22,7 @@ namespace Common {
         static_assert(std::atomic<size_type>::is_always_lock_free);
 
     public:
-        explicit LFQueue(size_type capacity, const Alloc& alloc) : Alloc{alloc}, capacity_(capacity), 
+        explicit LFQueue(size_type capacity, const Alloc& alloc = std::allocator<T>{}) : Alloc{alloc}, capacity_(capacity), 
                 store_(allocator_traits::allocate(*this, capacity)) {}
 
         ~LFQueue() {
