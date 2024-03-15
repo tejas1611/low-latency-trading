@@ -8,9 +8,10 @@ void consumer(LFQueue<int>& lfq) {
     std::this_thread::sleep_for(5s);
 
     while(lfq.size() > 0) {
-        const auto block = lfq.getNextToRead();
-        lfq.updateReadIndex();
-        std::cout << "consumer read elem: " << *block << " lfq-size: " << lfq.size() << std::endl;
+        int block;
+        if (lfq.pop(block)) {
+            std::cout << "consumer read elem: " << block << " lfq-size: " << lfq.size() << std::endl;
+        }
         std::this_thread::sleep_for(1.5s);
     }
 
@@ -19,16 +20,13 @@ void consumer(LFQueue<int>& lfq) {
 
 int main() {
     using namespace Common;
-    LFQueue<int> lfq(30);
+    LFQueue<int> lfq(30, std::allocator<int>{});
 
     std::thread* consumer_thread = createAndStartThread(-1, "LFQ Consumer", consumer, std::ref(lfq));
 
     for(int i = 0; i < 50; ++i) {
-        auto block = lfq.getNextToWrite();
-        *block = i;
-        lfq.updateWriteIndex();
-
-        std::cout << "main constructed elem: " << *block << " lfq-size: " << lfq.size() << std::endl;
+        ASSERT(lfq.push(i), "Producer attempted to push value to full LFQueue");
+        std::cout << "main constructed elem: " << i << " lfq-size: " << lfq.size() << std::endl;
 
         using namespace std::literals::chrono_literals;
         std::this_thread::sleep_for(1s);

@@ -46,8 +46,10 @@ namespace Common {
         std::thread* logger_thread_ = nullptr;
         std::atomic<bool> running_ = {true};
 
+        LogElement log_element_;
+
     public:
-        explicit Logger(const std::string& file_name) : file_name_(file_name), log_queue_(LOG_QUEUE_SIZE) {
+        explicit Logger(const std::string& file_name) : file_name_(file_name), log_queue_(LOG_QUEUE_SIZE, std::allocator<LogElement>{}) {
             file_.open(file_name);
             ASSERT(file_.is_open(), "Failed to open log file: " + file_name);
             logger_thread_ = createAndStartThread(-1, "Logger for " + file_name, [this](){ flushQueue(); });
@@ -56,38 +58,36 @@ namespace Common {
 
         void flushQueue() noexcept {
             while(running_) {
-                for (auto next = log_queue_.getNextToRead(); log_queue_.size() && next; next = log_queue_.getNextToRead()) {
-                    switch (next->type_) {
+                while (log_queue_.size() && log_queue_.pop(log_element_)) {
+                    switch (log_element_.type_) {
                         case LogType::CHAR:
-                            file_ << next->data_.c;
+                            file_ << log_element_.data_.c;
                         break;
                         case LogType::INTEGER:
-                            file_ << next->data_.i;
+                            file_ << log_element_.data_.i;
                         break;
                         case LogType::LONG_INTEGER:
-                            file_ << next->data_.l;
+                            file_ << log_element_.data_.l;
                         break;
                         case LogType::LONG_LONG_INTEGER:
-                            file_ << next->data_.ll;
+                            file_ << log_element_.data_.ll;
                         break;
                         case LogType::UNSIGNED_INTEGER:
-                            file_ << next->data_.u;
+                            file_ << log_element_.data_.u;
                         break;
                         case LogType::UNSIGNED_LONG_INTEGER:
-                            file_ << next->data_.ul;
+                            file_ << log_element_.data_.ul;
                         break;
                         case LogType::UNSIGNED_LONG_LONG_INTEGER:
-                            file_ << next->data_.ull;
+                            file_ << log_element_.data_.ull;
                         break;
                         case LogType::FLOAT:
-                            file_ << next->data_.f;
+                            file_ << log_element_.data_.f;
                         break;
                         case LogType::DOUBLE:
-                            file_ << next->data_.d;
+                            file_ << log_element_.data_.d;
                         break;
                     }
-
-                    log_queue_.updateReadIndex();
                 }
 
                 file_.flush();
@@ -113,8 +113,9 @@ namespace Common {
         }
 
         auto pushValue(const LogElement &log_element) noexcept {
-            *(log_queue_.getNextToWrite()) = log_element;
-            log_queue_.updateWriteIndex();
+            ASSERT(log_queue_.push(log_element), std::string("Logger for ") + file_name_ +  std::string(" attempted to push value to full LFQueue"));
+            // *(log_queue_.getNextToWrite()) = log_element;
+            // log_queue_.updateWriteIndex();
         }
 
         auto pushValue(const char value) noexcept {
