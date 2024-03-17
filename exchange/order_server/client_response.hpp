@@ -14,7 +14,8 @@ namespace Exchange {
         ACCEPTED = 1,
         CANCELED = 2,
         FILLED = 3,
-        CANCEL_REJECTED = 4
+        CANCEL_REJECTED = 4,
+        REJECTED = 5
     };
 
     inline std::string clientResponseTypeToString(ClientResponseType type) {
@@ -28,7 +29,9 @@ namespace Exchange {
             case ClientResponseType::FILLED:
                 return "FILLED";
             case ClientResponseType::CANCEL_REJECTED:
-                return "CANCELED_REJECTED";
+                return "CANCEL_REJECTED";
+            case ClientResponseType::REJECTED:
+                return "REJECTED";
         }
 
         return "UNKNOWN";
@@ -61,6 +64,21 @@ namespace Exchange {
             return ss.str();
         }
     };
+
+    struct PubClientResponse {
+        size_t seq_num_ = 0;
+        MEClientRequest me_client_response_;
+
+        std::toString() const noexcept {
+            std::stringstream ss;
+            ss << "PubClientResponse["
+                << "seq:" << seq_num_
+                << " " << me_client_response_.toString()
+                << "]";
+            return ss.str();
+        }
+    };
+
     #pragma pack(pop)
 
     typedef LFQueue<MEClientResponse> ClientResponseLFQueue;

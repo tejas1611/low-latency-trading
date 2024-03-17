@@ -51,6 +51,21 @@ namespace Exchange {
             return ss.str();
         }
     };
+
+    struct PubClientRequest {
+        size_t seq_num_ = 0;
+        MEClientRequest me_client_request_;
+
+        std::toString() const noexcept {
+            std::stringstream ss;
+            ss << "PubClientRequest["
+                << "seq:" << seq_num_
+                << " " << me_client_request_.toString()
+                << "]";
+            return ss.str();
+        }
+    };
+
     #pragma pack(pop)
 
     typedef LFQueue<MEClientRequest> ClientRequestLFQueue;
