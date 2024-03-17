@@ -1,9 +1,9 @@
 #include "order_server/order_server.hpp"
 
 namespace Exchange {
-    OrderServer::OrderServer(const std::string& iface, int port, ClientResponseLFQueue* outgoing_responses)
+    OrderServer::OrderServer(const std::string& iface, int port, ClientResponseLFQueue* outgoing_responses, ClientRequestLFQueue* incoming_requests)
         : iface_(iface), port_(port), outgoing_responses_(outgoing_responses), logger_("exchange_order_server.log"), 
-        tcp_server_(logger_), fifo_sequencer_() { // TODO
+        tcp_server_(logger_), fifo_sequencer_(incoming_requests, &logger_) {
         cid_next_outgoing_seq_num_.fill(1);
         cid_next_exp_seq_num_.fill(1);
         cid_next_exp_seq_num_.fill(nullptr);
@@ -34,7 +34,6 @@ namespace Exchange {
         logger_.log("%:% %() %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_));
         while (run_) {
             tcp_server_.poll();
-
             tcp_server_.sendAndRecv();
 
             while (outgoing_responses_->pop(me_client_response_)) {
