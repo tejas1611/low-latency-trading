@@ -60,6 +60,12 @@ namespace Common {
         return (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMP, reinterpret_cast<void *>(&one), sizeof(one)) != -1);
     }
 
+    // Add / Join membership / subscription to the multicast stream specified and on the interface specified.
+    inline auto join(int fd, const std::string &ip) -> bool {
+        const ip_mreq mreq{{inet_addr(ip.c_str())}, {htonl(INADDR_ANY)}};
+        return (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) != -1);
+    }
+
     // Create a TCP / UDP socket to either connect to or listen for data on or listen for connections on the specified interface and IP:port information.
     inline auto createSocket(Logger &logger, const std::string& t_ip, const std::string& iface, int port, 
     bool is_udp, bool is_blocking, bool is_listening, bool needs_so_timestamp) -> int {
