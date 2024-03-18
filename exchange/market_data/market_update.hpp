@@ -71,7 +71,7 @@ namespace Exchange {
         size_t seq_num_ = 0;
         MEMarketUpdate me_market_update_;
 
-        std::toString() const noexcept {
+        std::string toString() const noexcept {
             std::stringstream ss;
             ss << "PubMarketUpdate["
                 << "seq:" << seq_num_

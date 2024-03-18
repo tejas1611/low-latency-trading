@@ -10,8 +10,8 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 add_subdirectory(common)
 add_subdirectory(exchange)
 
-list(APPEND LIBS libcommon)
 list(APPEND LIBS libexchange)
+list(APPEND LIBS libcommon)
 list(APPEND LIBS pthread)
 
 include_directories(${PROJECT_SOURCE_DIR})

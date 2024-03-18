@@ -52,7 +52,7 @@ int main() {
     const int order_gw_port = 12345;
 
     logger->log("%:% %() % Starting Order Server...\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str));
-    order_server = new Exchange::OrderServer(&client_requests, &client_responses, order_gw_iface, order_gw_port);
+    order_server = new Exchange::OrderServer(order_gw_iface, order_gw_port, &client_responses, &client_requests);
     order_server->start();
 
     while (true) {

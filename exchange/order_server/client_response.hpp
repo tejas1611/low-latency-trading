@@ -67,9 +67,9 @@ namespace Exchange {
 
     struct PubClientResponse {
         size_t seq_num_ = 0;
-        MEClientRequest me_client_response_;
+        MEClientResponse me_client_response_;
 
-        std::toString() const noexcept {
+        std::string toString() const noexcept {
             std::stringstream ss;
             ss << "PubClientResponse["
                 << "seq:" << seq_num_

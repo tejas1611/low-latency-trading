@@ -1,7 +1,9 @@
 #pragma once
 
-#include "order_server/client_response.hpp"
+#include "common/time_utils.hpp"
 #include "common/types.hpp"
+
+#include "order_server/client_request.hpp"
 
 namespace Exchange
 {
@@ -46,13 +48,13 @@ public:
 
         std::sort(pending_client_requests_.begin(), pending_client_requests_.begin() + pending_size_);
 
-        for (auto i = 0; i < pending_size_; ++i) {
+        for (size_t i = 0; i < pending_size_; ++i) {
             const auto &client_request = pending_client_requests_.at(i);
 
             logger_->log("%:% %() % Writing RX:% Req:% to FIFO.\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
-                        client_request.recv_time_, client_request.request_.toString());
+                        client_request.recv_time_, client_request.me_client_request_.toString());
                         
-            incoming_requests_->push(std::move(client_request.request_));
+            incoming_requests_->push(std::move(client_request.me_client_request_));
         }
 
         pending_size_ = 0;

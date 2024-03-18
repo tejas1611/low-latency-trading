@@ -19,7 +19,7 @@ private:
 
     Common::MCastSocket incremental_updates_socket_;
 
-    SnapshotSynthesizer snapshot_synthesizer_;
+    SnapshotSynthesizer* snapshot_synthesizer_;
 
     MEMarketUpdate market_update_;
     PubMarketUpdate pub_market_update_;
@@ -27,8 +27,9 @@ private:
 public:
     MarketDataPublisher(MEMarketUpdateLFQueue* outgoing_md_updates, const std::string &iface,
         const std::string &snapshot_ip, int snapshot_port, const std::string &incremental_ip, int incremental_port) 
-        : outgoing_md_updates_(outgoing_md_updates), logger_("exchange_market_data_publisher.log"), incremental_updates_socket_(logger_) {
-            ASSERT(incremental_socket_.init(incremental_ip, iface, incremental_port, false) >= 0, "Unable to create incremental mcast socket. error:" + std::string(std::strerror(errno)));
+        : outgoing_md_updates_(outgoing_md_updates), snapshot_md_updates_(ME_MAX_MARKET_UPDATES), 
+        logger_("exchange_market_data_publisher.log"), incremental_updates_socket_(logger_) {
+            ASSERT(incremental_updates_socket_.init(incremental_ip, iface, incremental_port, false) >= 0, "Unable to create incremental mcast socket. error:" + std::string(std::strerror(errno)));
             snapshot_synthesizer_ = new SnapshotSynthesizer(&snapshot_md_updates_, iface, snapshot_ip, snapshot_port);
         }
 
@@ -58,17 +59,17 @@ public:
         while (running_) {
             while (outgoing_md_updates_->pop(market_update_)) {
                 logger_.log("%:% %() % Sending seq:% %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_), next_inc_seq_num_,
-                            market_update_->toString().c_str());
+                            market_update_.toString().c_str());
 
-                incremental_socket_.send(&next_inc_seq_num_, sizeof(next_inc_seq_num_));
-                incremental_socket_.send(market_update_, sizeof(MEMarketUpdate));
+                incremental_updates_socket_.send(&next_inc_seq_num_, sizeof(next_inc_seq_num_));
+                incremental_updates_socket_.send(&market_update_, sizeof(MEMarketUpdate));
 
-                pub_market_update_ = {next_inc_seq_num_, *market_update_};
+                pub_market_update_ = {next_inc_seq_num_, std::move(market_update_)};
                 snapshot_md_updates_.push(std::move(pub_market_update_));
                 ++next_inc_seq_num_;
             }
 
-            incremental_socket_.sendAndRecv();
+            incremental_updates_socket_.sendAndRecv();
         }
     }
 

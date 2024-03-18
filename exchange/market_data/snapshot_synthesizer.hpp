@@ -12,7 +12,6 @@ namespace Exchange
 class SnapshotSynthesizer {
 private:
     PubMarketUpdateLFQueue* snapshot_md_updates_ = nullptr;
-    Common::MCastSocket snapshot_updates_socket_;
     
     volatile bool running_ = false;
 
@@ -20,11 +19,12 @@ private:
     size_t last_inc_seq_num_ = 0;
     Nanos last_snapshot_time_ = 0;
 
-    Common::MemPool<MEMarketUpdate> order_pool_;
-
     Logger logger_;
     std::string time_str_;
 
+    Common::MCastSocket snapshot_updates_socket_;
+    Common::MemPool<MEMarketUpdate> order_pool_;
+    
     PubMarketUpdate market_update_;
 
 public:

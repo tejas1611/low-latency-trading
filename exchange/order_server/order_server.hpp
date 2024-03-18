@@ -1,9 +1,10 @@
 #pragma once
 
-#include "common/thread_utils.h"
 #include "common/tcp_server.hpp"
+#include "common/thread_utils.hpp"
 #include "common/types.hpp"
 #include "common/macros.hpp"
+
 #include "order_server/client_request.hpp"
 #include "order_server/client_response.hpp"
 #include "order_server/fifo_sequencer.hpp"
@@ -18,20 +19,20 @@ private:
 
     volatile bool running_ = false;
 
-    std::array<size_t, ME_MAX_NUM_CLIENTS> cid_next_outgoing_seq_num_;
-    std::array<size_t, ME_MAX_NUM_CLIENTS> cid_next_exp_seq_num_;
-    std::array<Common::TCPSocket *, ME_MAX_NUM_CLIENTS> cid_tcp_socket_;
+    std::string time_str_;
+    Logger logger_;
 
     Common::TCPServer tcp_server_;
     FIFOSequencer fifo_sequencer_;
 
-    std::string time_str_;
-    Logger logger_;
+    std::array<size_t, ME_MAX_NUM_CLIENTS> cid_next_outgoing_seq_num_;
+    std::array<size_t, ME_MAX_NUM_CLIENTS> cid_next_exp_seq_num_;
+    std::array<Common::TCPSocket*, ME_MAX_NUM_CLIENTS> cid_tcp_socket_;
 
     MEClientResponse me_client_response_;
 
 public:
-    OrderServer(const std::string& iface, int port, ClientResponseLFQueue* outgoing_responses);
+    OrderServer(const std::string& iface, int port, ClientResponseLFQueue* outgoing_responses, ClientRequestLFQueue* incoming_requests);
     ~OrderServer();
 
     void start();

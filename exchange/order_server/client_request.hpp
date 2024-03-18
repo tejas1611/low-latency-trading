@@ -56,7 +56,7 @@ namespace Exchange {
         size_t seq_num_ = 0;
         MEClientRequest me_client_request_;
 
-        std::toString() const noexcept {
+        std::string toString() const noexcept {
             std::stringstream ss;
             ss << "PubClientRequest["
                 << "seq:" << seq_num_

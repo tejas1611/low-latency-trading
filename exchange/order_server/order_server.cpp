@@ -6,7 +6,7 @@ namespace Exchange {
         tcp_server_(logger_), fifo_sequencer_(incoming_requests, &logger_) {
         cid_next_outgoing_seq_num_.fill(1);
         cid_next_exp_seq_num_.fill(1);
-        cid_next_exp_seq_num_.fill(nullptr);
+        cid_tcp_socket_.fill(nullptr);
 
         tcp_server_.recv_callback_ = [this](auto socket, auto rx_time) { recvCallback(socket, rx_time); };
         tcp_server_.recv_finished_callback_ = [this]() { recvFinishedCallback(); };
@@ -32,7 +32,7 @@ namespace Exchange {
 
     void OrderServer::run() noexcept {
         logger_.log("%:% %() %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_));
-        while (run_) {
+        while (running_) {
             tcp_server_.poll();
             tcp_server_.sendAndRecv();
 
@@ -44,7 +44,7 @@ namespace Exchange {
                 ASSERT(cid_tcp_socket_[me_client_response_.client_id_] != nullptr,
                         "Dont have a TCPSocket for ClientId:" + std::to_string(me_client_response_.client_id_));
                 cid_tcp_socket_[me_client_response_.client_id_]->send(&next_outgoing_seq_num, sizeof(next_outgoing_seq_num));
-                cid_tcp_socket_[me_client_response_.client_id_]->send(me_client_response_, sizeof(MEClientResponse));
+                cid_tcp_socket_[me_client_response_.client_id_]->send(&me_client_response_, sizeof(MEClientResponse));
 
                 ++next_outgoing_seq_num;
             }
