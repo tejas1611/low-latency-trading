@@ -1,5 +1,5 @@
-#include "lf_queue.hpp"
-#include "thread_utils.hpp"
+#include "common/lf_queue.hpp"
+#include "common/thread_utils.hpp"
 
 using namespace Common;
 
@@ -20,7 +20,7 @@ void consumer(LFQueue<int>& lfq) {
 
 int main() {
     using namespace Common;
-    LFQueue<int> lfq(30, std::allocator<int>{});
+    LFQueue<int> lfq(32, std::allocator<int>{});
 
     std::thread* consumer_thread = createAndStartThread(-1, "LFQ Consumer", consumer, std::ref(lfq));
 

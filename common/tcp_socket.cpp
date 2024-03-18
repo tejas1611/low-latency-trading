@@ -1,7 +1,7 @@
 #include "tcp_socket.hpp"
 
 namespace Common {
-    auto TCPSocket::connect(const std::string &ip, const std::string &iface, int port, bool is_listening) -> int {
+    int TCPSocket::connect(const std::string &ip, const std::string &iface, int port, bool is_listening) {
         // Note that needs_so_timestamp=true for FIFOSequencer.
         socket_fd_ = createSocket(logger_, ip, iface, port, false, false, is_listening, true);
 
@@ -13,7 +13,7 @@ namespace Common {
     }
 
     // Called to publish outgoing data from the buffers as well as check for and callback if data is available in the read buffers.
-    auto TCPSocket::sendAndRecv() noexcept -> bool {
+    bool TCPSocket::sendAndRecv() noexcept {
         char ctrl[CMSG_SPACE(sizeof(struct timeval))];
         auto cmsg = reinterpret_cast<struct cmsghdr *>(&ctrl);
 
@@ -51,7 +51,7 @@ namespace Common {
     }
 
     // Write outgoing data to the send buffers.
-    auto TCPSocket::send(const void *data, size_t len) noexcept -> void {
+    void TCPSocket::send(const void *data, size_t len) noexcept {
         memcpy(outbound_data_.data() + next_send_valid_index_, data, len);
         next_send_valid_index_ += len;
     }

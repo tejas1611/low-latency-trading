@@ -1,6 +1,6 @@
-#include "time_utils.hpp"
-#include "logger.hpp"
-#include "tcp_server.hpp"
+#include "common/time_utils.hpp"
+#include "common/logger.hpp"
+#include "common/tcp_server.hpp"
 
 int main() {
     using namespace Common;

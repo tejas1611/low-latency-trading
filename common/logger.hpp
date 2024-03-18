@@ -49,7 +49,7 @@ namespace Common {
         LogElement log_element_;
 
     public:
-        explicit Logger(const std::string& file_name) : file_name_(file_name), log_queue_(LOG_QUEUE_SIZE, std::allocator<LogElement>{}) {
+        explicit Logger(const std::string& file_name) : file_name_(file_name), log_queue_(LOG_QUEUE_SIZE) {
             file_.open(file_name);
             ASSERT(file_.is_open(), "Failed to open log file: " + file_name);
             logger_thread_ = createAndStartThread(-1, "Logger for " + file_name, [this](){ flushQueue(); });

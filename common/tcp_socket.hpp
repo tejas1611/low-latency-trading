@@ -19,9 +19,9 @@ namespace Common {
             socket_fd_ = -1;
         }
 
-        auto connect(const std::string &ip, const std::string &iface, int port, bool is_listening) -> int;
-        auto sendAndRecv() noexcept -> bool;
-        auto send(const void *data, size_t len) noexcept -> void;
+        int connect(const std::string &ip, const std::string &iface, int port, bool is_listening);
+        bool sendAndRecv() noexcept;
+        void send(const void *data, size_t len) noexcept;
 
         TCPSocket() = delete;
         TCPSocket(const TCPSocket &) = delete;
