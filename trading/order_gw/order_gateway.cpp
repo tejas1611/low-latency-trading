@@ -36,12 +36,12 @@ namespace Trading {
 
             while (outgoing_requests_->pop(me_client_request_)) {
                 logger_.log("%:% %() % Sending cid:% seq:% %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
-                            me_client_request_.client_id_, next_outgoing_seq_num, me_client_request_.toString());
+                            me_client_request_.client_id_, next_outgoing_seq_num_, me_client_request_.toString());
 
-                tcp_socket_->send(&next_outgoing_seq_num, sizeof(next_outgoing_seq_num));
+                tcp_socket_->send(&next_outgoing_seq_num_, sizeof(next_outgoing_seq_num_));
                 tcp_socket_->send(&me_client_request_, sizeof(Exchange::MEClientResponse));
 
-                ++next_outgoing_seq_num;
+                ++next_outgoing_seq_num_;
             }
         }
     }
